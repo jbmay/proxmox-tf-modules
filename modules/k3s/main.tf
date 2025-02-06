@@ -1,7 +1,7 @@
 locals {
-  uname = var.unique_suffix ? lower("${var.cluster_name}-${random_string.uid.result}") : lower(var.cluster_name)
+  uname        = var.unique_suffix ? lower("${var.cluster_name}-${random_string.uid.result}") : lower(var.cluster_name)
   server_count = length(var.proxmox_server_nodes)
-  agent_count = length(var.proxmox_agent_nodes)
+  agent_count  = length(var.proxmox_agent_nodes)
 }
 
 resource "random_string" "uid" {
@@ -45,7 +45,7 @@ resource "proxmox_virtual_environment_file" "server_user_data_cloud_config" {
   count        = var.bootstrap_cluster ? local.server_count - 1 : local.server_count
   content_type = "snippets"
   datastore_id = var.snippet_datastore
-  node_name = var.bootstrap_cluster ? var.proxmox_server_nodes[count.index + 1] : var.proxmox_server_nodes[count.index]
+  node_name    = var.bootstrap_cluster ? var.proxmox_server_nodes[count.index + 1] : var.proxmox_server_nodes[count.index]
 
   source_raw {
     data = <<-EOF
@@ -145,12 +145,12 @@ resource "proxmox_virtual_environment_vm" "k3s_bootstrap_node" {
     }
 
     user_data_file_id = proxmox_virtual_environment_file.bootstrap_user_data_cloud_config[0].id
-    meta_data_file_id  = proxmox_virtual_environment_file.server_metadata_cloud_config[0].id
+    meta_data_file_id = proxmox_virtual_environment_file.server_metadata_cloud_config[0].id
   }
 }
 
 resource "proxmox_virtual_environment_vm" "k3s_server_nodes" {
-  count        = var.bootstrap_cluster ? local.server_count - 1 : local.server_count
+  count     = var.bootstrap_cluster ? local.server_count - 1 : local.server_count
   name      = var.bootstrap_cluster ? "${local.uname}-server-${count.index + 1}" : "${local.uname}-server-${count.index}"
   node_name = var.bootstrap_cluster ? var.proxmox_server_nodes[count.index + 1] : var.proxmox_server_nodes[count.index]
 
@@ -194,7 +194,7 @@ resource "proxmox_virtual_environment_vm" "k3s_server_nodes" {
     }
 
     user_data_file_id = proxmox_virtual_environment_file.server_user_data_cloud_config[count.index].id
-    meta_data_file_id  = var.bootstrap_cluster ? proxmox_virtual_environment_file.server_metadata_cloud_config[count.index + 1].id : proxmox_virtual_environment_file.server_metadata_cloud_config[count.index].id
+    meta_data_file_id = var.bootstrap_cluster ? proxmox_virtual_environment_file.server_metadata_cloud_config[count.index + 1].id : proxmox_virtual_environment_file.server_metadata_cloud_config[count.index].id
   }
 }
 

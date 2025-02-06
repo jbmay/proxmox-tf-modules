@@ -18,13 +18,13 @@ variable "cloud_init_datastore_id" {
 variable "root_disk_size" {
   description = "Size in GB to set root disk to. Must be equal or larger than the cloned disk"
   type        = number
-  default = 25
+  default     = 25
 }
 
 variable "unique_suffix" {
   description = "Generate unique suffix for resource names"
   type        = bool
-  default = true
+  default     = true
 }
 
 variable "cluster_name" {
@@ -35,19 +35,19 @@ variable "cluster_name" {
 variable "server_ips" {
   description = "List of static IPs in CIDR notation for server nodes. If set, should be same size as var.proxmox_server_nodes so one IP is available per server"
   type        = list(string)
-  default = null
+  default     = null
 }
 
 variable "server_gateway" {
   description = "IP gateway for servers. Should be null if using DHCP, and set to the correct gateway if setting static IPs"
   type        = string
-  default = null
+  default     = null
 }
 
 variable "dns_servers" {
   description = "List of DNS servers to set for VMs. Optional if using DHCP"
   type        = list(string)
-  default = null
+  default     = null
 }
 
 variable "proxmox_server_nodes" {
@@ -58,13 +58,13 @@ variable "proxmox_server_nodes" {
 variable "proxmox_agent_nodes" {
   description = "List of proxmox nodes to deploy agent nodes to. 1 agent node VM per proxmox node will be created."
   type        = list(string)
-  default = []
+  default     = []
 }
 
 variable "bootstrap_cluster" {
   description = "Should cluster be bootstrapped? Set to true if creating a new cluster, set to false if joining nodes to existing cluster."
   type        = bool
-  default = true
+  default     = true
 }
 
 variable "join_token" {
@@ -85,7 +85,7 @@ variable "user" {
 variable "user_password" {
   description = "Password to set for VM user"
   type        = string
-  default = ""
+  default     = ""
 }
 
 variable "ssh_key" {
