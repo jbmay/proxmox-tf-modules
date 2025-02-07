@@ -6,7 +6,6 @@ Uses bpg proxmox provider.
 
 # Assumptions
 - Currently expects to clone a Debian/Ubuntu proxmox template that has the qemu-guest-agent already installed. Tested with template built on Ubuntu server minimal cloud image version 22.04 with qemu-guest-agent preconfigured
-- Currently expects network interface to be preconfigured on template
 - Relies on having SSH access to proxmox nodes in order to create snippets used for configuring cloud-init userdata and metadata
 - Expects the same template to be available on each Proxmox node for VM cloning
 
