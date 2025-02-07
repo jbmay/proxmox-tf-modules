@@ -34,7 +34,7 @@ resource "proxmox_virtual_environment_file" "bootstrap_user_data_cloud_config" {
         ssh_pwauth: True
     runcmd:
         - apt update
-        - curl -sfL https://get.k3s.io | K3S_TOKEN=${var.join_token} sh -s - server --cluster-init --tls-san=${var.cluster_tls_san}
+        - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${var.k3s_version} K3S_TOKEN=${var.join_token} sh -s - server --cluster-init --tls-san=${var.cluster_tls_san}
     EOF
 
     file_name = "${local.uname}-server-${count.index}-user-data-cloud-config.yaml"
@@ -63,7 +63,7 @@ resource "proxmox_virtual_environment_file" "server_user_data_cloud_config" {
         ssh_pwauth: True
     runcmd:
         - apt update
-        - curl -sfL https://get.k3s.io | K3S_TOKEN=${var.join_token} sh -s - server --server https://${var.cluster_tls_san}:6443 --tls-san=${var.cluster_tls_san}
+        - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${var.k3s_version} K3S_TOKEN=${var.join_token} sh -s - server --server https://${var.cluster_tls_san}:6443 --tls-san=${var.cluster_tls_san}
     EOF
 
     file_name = "${local.uname}-server-${var.bootstrap_cluster ? count.index + 1 : count.index}-user-data-cloud-config.yaml"
@@ -129,10 +129,11 @@ resource "proxmox_virtual_environment_vm" "k3s_bootstrap_node" {
   # Settings and size of cloned root volume
   disk {
     datastore_id = var.root_disk_datastore_id
-    interface    = "scsi0"
-    iothread     = true
-    discard      = "on"
+    interface    = var.root_disk_interface
+    iothread     = var.root_disk_iothread
+    discard      = var.root_disk_discard
     size         = var.root_disk_size
+    ssd          = var.root_disk_ssd
   }
 
   initialization {
@@ -147,6 +148,17 @@ resource "proxmox_virtual_environment_vm" "k3s_bootstrap_node" {
     user_data_file_id = proxmox_virtual_environment_file.bootstrap_user_data_cloud_config[0].id
     meta_data_file_id = proxmox_virtual_environment_file.server_metadata_cloud_config[0].id
   }
+
+  network_device {
+      bridge = var.network_device_bridge
+      firewall = var.network_device_firewall
+      mtu = var.network_device_mtu
+    }
+
+    vga {
+      memory = var.vga_memory
+      type = var.vga_type
+    }
 }
 
 resource "proxmox_virtual_environment_vm" "k3s_server_nodes" {
@@ -178,10 +190,11 @@ resource "proxmox_virtual_environment_vm" "k3s_server_nodes" {
   # Settings and size of cloned root volume
   disk {
     datastore_id = var.root_disk_datastore_id
-    interface    = "scsi0"
-    iothread     = true
-    discard      = "on"
+    interface    = var.root_disk_interface
+    iothread     = var.root_disk_iothread
+    discard      = var.root_disk_discard
     size         = var.root_disk_size
+    ssd          = var.root_disk_ssd
   }
 
   initialization {
@@ -196,8 +209,19 @@ resource "proxmox_virtual_environment_vm" "k3s_server_nodes" {
     user_data_file_id = proxmox_virtual_environment_file.server_user_data_cloud_config[count.index].id
     meta_data_file_id = var.bootstrap_cluster ? proxmox_virtual_environment_file.server_metadata_cloud_config[count.index + 1].id : proxmox_virtual_environment_file.server_metadata_cloud_config[count.index].id
   }
+
+  network_device {
+      bridge = var.network_device_bridge
+      firewall = var.network_device_firewall
+      mtu = var.network_device_mtu
+    }
+
+    vga {
+      memory = var.vga_memory
+      type = var.vga_type
+    }
 }
 
-# output "vm_ipv4_address" {
-#   value = proxmox_virtual_environment_vm.ubuntu_vm.ipv4_addresses[1][0]
-# }
+output "bootstrap_ipv4_address" {
+  value = proxmox_virtual_environment_vm.k3s_bootstrap_node[0].ipv4_addresses[1][0]
+}

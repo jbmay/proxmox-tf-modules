@@ -1,5 +1,12 @@
-## Resource
-### (must be provided by the user of the module)
+## k3s settings
+
+variable "k3s_version" {
+  description = "What version of k3s to install?"
+  type        = string
+  default     = "v1.31.5+k3s1"
+}
+
+## VM Settings
 variable "template_name" {
   description = "Name of proxmox template to clone when creating k3s node VMs"
   type        = string
@@ -10,15 +17,39 @@ variable "root_disk_datastore_id" {
   type        = string
 }
 
-variable "cloud_init_datastore_id" {
-  description = "Datastore to create cloud-init disk on"
-  type        = string
-}
-
 variable "root_disk_size" {
   description = "Size in GB to set root disk to. Must be equal or larger than the cloned disk"
   type        = number
   default     = 25
+}
+
+variable "root_disk_interface" {
+  description = "What interface type for root disk? Defaults to scsi0"
+  type        = string
+  default     = "scsi0"
+}
+
+variable "root_disk_iothread" {
+  description = "Should iothreads be used for this disk?"
+  type        = bool
+  default     = true
+}
+
+variable "root_disk_ssd" {
+  description = "Should ssd emulation be used for the disk? This is not supported for VirtIO Block drives"
+  type        = bool
+  default     = true
+}
+
+variable "root_disk_discard" {
+  description = "Should discard/trim requests be passed to underlying storage? Turn off if underlying storage doesn't support this."
+  type        = string
+  default     = "on"
+}
+
+variable "cloud_init_datastore_id" {
+  description = "Datastore to create cloud-init disk on"
+  type        = string
 }
 
 variable "unique_suffix" {
@@ -120,4 +151,34 @@ variable "server_memory" {
   description = "Memory for each node"
   type        = number
   default     = 4 * 1024
+}
+
+variable "network_device_bridge" {
+  description = "Which network bridge to use for the VM network interface. Defaults to vmbr1 since I use vmbr0 for management devices and vmbr1 for my default VM subnet"
+  type        = string
+  default     = "vmbr1"
+}
+
+variable "network_device_firewall" {
+  description = "Should firewall rules be used?"
+  type        = bool
+  default     = true
+}
+
+variable "network_device_mtu" {
+  description = "MTU for the VM network interface. Defaults to 1 so it is the same as the bridge"
+  type        = number
+  default     = 1
+}
+
+variable "vga_type" {
+  description = "Type of VGA. Defaults to serial0 for cloud images"
+  type        = string
+  default     = "serial0"
+}
+
+variable "vga_memory" {
+  description = "Memory for VGA"
+  type        = number
+  default     = 16
 }
