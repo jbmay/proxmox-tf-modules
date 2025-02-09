@@ -103,8 +103,8 @@ variable "join_token" {
   type        = string
 }
 
-variable "cluster_tls_san" {
-  description = "Fixed IP or hostname to add to cert SANs for kube API"
+variable "server_hostname" {
+  description = "Fixed IP or hostname to add to cert SANs for kube API. Also used as the join hostname for cluster nodes"
   type        = string
 }
 

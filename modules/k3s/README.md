@@ -9,11 +9,22 @@ Uses bpg proxmox provider.
 - Relies on having SSH access to proxmox nodes in order to create snippets used for configuring cloud-init userdata and metadata
 - Expects the same template to be available on each Proxmox node for VM cloning
 
+# Configuration notes
+
+## Node count and location
+Since Proxmox requires choosing a specific node to create a VM on, this module relies on passing lists of nodes to control the count and location of k3s nodes. For example setting `proxmox_server_nodes = ["pve0", "pve1", "pve2"]` would create 1 k3s server node VM on each of the listed proxmox hosts. Setting `proxmox_server_nodes = ["pve0", "pve0", "pve0"]` would instead create 3 k3s server node VMs all on the proxmox host named `pve0`. It is a little clunky compared to just passing in a count, but it is a proxmox-ism.
+
+## kube API access
+The example deployment of this module shows setting the `server_hostname` input variable to the static IP passed to the bootstrap node. This is fine for an example and testing purposes, but it would be more resilient and flexible to set this to a hostname instead. The hostname should be configured to resolve to a load balancer service, such as haproxy or nginx, running outside of the cluster that balances traffic for port 6443 between each server node. This enables new cluster nodes to join the cluster by hitting any of the ready server nodes, not just the bootstrap node. It also enables more resilient connections to the kube api for interacting with your cluster since you aren't configuring your kube context based on an IP of a single node.
+
+In the future, the examples may be updated to include configuring a load balancer and DNS records dynamically when deploying a cluster. For now, it is recommended to follow the [k3s instructions for setting up an external LB](https://docs.k3s.io/datastore/cluster-loadbalancer) and just make sure you have the load balancer and a DNS entry for your server hostname configured before deploying a k3s cluster with this module. Note that the k3s instructions for this end with installing k3s on the same hosts as the load balancer nodes. If using this terraform module to deploy k3s, skip that step since k3s will be running on VMs deployed by this module.
+
 # Known issues and limitations
 - Currently there seems to be a bug with the bpg provider as of version 0.70.1 when attempting to expand the root volume after cloning. This means currently it has only been tested to work when deploying with the root_disk_size set to the same size as the template being cloned
   - This issue was encountered with version 0.70.1 of the module, version 1.9.0 of tofu, and proxmox version 7.4-17
   - Related GitHub issues [781](https://github.com/bpg/terraform-provider-proxmox/issues/781), [360](https://github.com/bpg/terraform-provider-proxmox/issues/360), [1747](https://github.com/bpg/terraform-provider-proxmox/issues/1747)
   - Workaround for this issue found and documented below
+  - Update: This issue is apparently specific to Proxmox versions before 8.x [according to the provider dev](https://github.com/bpg/terraform-provider-proxmox/issues/1747#issuecomment-2641864871). If using Proxmox 8 or newer, this shouldn't be an issue
 - Currently only deploys with a root disk and doesn't configure additional data volumes
 - Currently only deploys server nodes, no dedicated agent nodes
 - This module can be used to bootstrap new clusters and join nodes to existing clusters, but it does not automatically handle nodes being removed from the cluster or cluster upgrades. Without using other tooling for cluster upgrades, the upgrade path using only this module would be to deploy a new set of upgraded nodes, join them to your cluster, and then manually cordon and drain the old nodes. Then once workloads have migrated to the new nodes, you could destroy the old node VMs with a tofu/terraform destroy
@@ -21,6 +32,8 @@ Uses bpg proxmox provider.
   - If there are any default cloud-init settings on the template for configuring a user, password, or ssh key then a subsequent apply will want to destroy and recreate the VMs because cloud-init changes force a recreation. It is recommended to remove these settings from the templates being used with this module
 
 # Workaround for disk expansion bug
+Update: This issue is apparently specific to Proxmox versions before 8.x [according to the provider dev](https://github.com/bpg/terraform-provider-proxmox/issues/1747#issuecomment-2641864871). If using Proxmox 8 or newer, this shouldn't be an issue
+
 Discovered that the bug related to expanding disks can be worked around by manually rebooting VMs after applying with updated disk size, followed by a second apply.
 
 Steps:

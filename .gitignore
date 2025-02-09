@@ -1,4 +1,3 @@
 # Local .terraform directories
 **/.terraform*
 **/*.tfstate*
-**/*.auto.tfvars
