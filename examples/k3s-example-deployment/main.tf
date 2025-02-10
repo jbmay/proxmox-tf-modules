@@ -87,7 +87,7 @@ resource "random_password" "join_token" {
 module "k3s-management" {
   # source ref using a git tag on public github repository
   # source = git::https://github.com/jbmay/proxmox-tf-modules.git//modules/k3s?ref=v0.1.1
-  # example local ref to module in same repo
+  # example local ref to module in same repo for testing changes
   source = "../../modules/k3s"
 
   template_name           = local.template_name
