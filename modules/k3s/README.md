@@ -26,7 +26,8 @@ In the future, the examples may be updated to include configuring a load balance
   - Workaround for this issue found and documented below
   - Update: This issue is apparently specific to Proxmox versions before 8.x [according to the provider dev](https://github.com/bpg/terraform-provider-proxmox/issues/1747#issuecomment-2641864871). If using Proxmox 8 or newer, this shouldn't be an issue
 - Currently only deploys with a root disk and doesn't configure additional data volumes
-- Currently only deploys server nodes, no dedicated agent nodes
+  - Currently it uses the same virtual disk settings for the root volume for both server and agent nodes
+- ~~Currently only deploys server nodes, no dedicated agent nodes~~ This has been added as of version 0.1.3
 - This module can be used to bootstrap new clusters and join nodes to existing clusters, but it does not automatically handle nodes being removed from the cluster or cluster upgrades. Without using other tooling for cluster upgrades, the upgrade path using only this module would be to deploy a new set of upgraded nodes, join them to your cluster, and then manually cordon and drain the old nodes. Then once workloads have migrated to the new nodes, you could destroy the old node VMs with a tofu/terraform destroy
 - If the template being cloned has any settings configured that the VM definitions in this module don't configure, an initial deploy will work fine but subsequent deploys will want to revert those settings from the template to match the defaults that the provider uses. This will appear as terraform/tofu wanting to change settings to null or default values if the provider has any.
   - If there are any default cloud-init settings on the template for configuring a user, password, or ssh key then a subsequent apply will want to destroy and recreate the VMs because cloud-init changes force a recreation. It is recommended to remove these settings from the templates being used with this module
