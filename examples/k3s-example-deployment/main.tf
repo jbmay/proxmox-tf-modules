@@ -3,7 +3,8 @@ locals {
   vm_ssh_key  = "ssh public key for vm access"
   # password `password` hashed with command `mkpasswd -m sha-512 -s`
   vm_user_password = "$6$lYn1N2zlfWxOnRrC$bSBBiEFdphiF.uG7Md0NsYerF0zfqREKI/SJsxG.0LJIZRRVwwsf.NpG9lY8lm09r5yFbSDlFXpodXmVqWzxR0"
-  node_list        = ["pve0", "pve1", "pve2"]
+  server_node_list        = ["pve0", "pve1", "pve2"]
+  agent_node_list        = ["pve0", "pve1", "pve2"]
   # Proxmox VM template that exists on each proxmox node you want to deploy a k3s node onto. Should have qemu-guest-agent installed and configured to run
   template_name = "ubuntu-server-2204-base-template.v2"
 }
@@ -94,11 +95,13 @@ module "k3s-management" {
   root_disk_datastore_id  = "local-zfs"
   cloud_init_datastore_id = "local-zfs"
   cluster_name            = "k3s-example"
-  # List of static IPs for nodes. If using this input var, it should have 1 IP per proxmox node added to local.node_list
+  # List of static IPs for server nodes. If using this input var, it should have 1 IP per proxmox node added to local.server_node_list
   server_ips     = ["10.1.0.10/23", "10.1.0.11/23", "10.1.0.12/23"]
   server_gateway = "10.1.0.1"
   # List of proxmox nodes to deploy a k3s server node onto. This variable is used to determine the number of server nodes and which hosts to create them on
-  proxmox_server_nodes = local.node_list
+  proxmox_server_nodes = local.server_node_list
+  # List of proxmox nodes to deploy a k3s agent node to
+  proxmox_agent_nodes = local.agent_node_list
   join_token           = random_password.join_token.result
   # For this example the server hostname is set to first static IP passed in to the module which will be assigned to the bootstrap node.
   # See k3s module README for notes on recommended method of configuring this
