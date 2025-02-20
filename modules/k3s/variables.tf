@@ -84,6 +84,7 @@ variable "dns_servers" {
 variable "proxmox_server_nodes" {
   description = "List of proxmox nodes to deploy server nodes to. 1 server node VM per proxmox node will be created."
   type        = list(string)
+  default     = []
 }
 
 variable "proxmox_agent_nodes" {
@@ -148,7 +149,19 @@ variable "server_cpu_cores" {
 }
 
 variable "server_memory" {
-  description = "Memory for each node"
+  description = "Memory for each server node"
+  type        = number
+  default     = 4 * 1024
+}
+
+variable "agent_cpu_cores" {
+  description = "Cores for each agent node"
+  type        = number
+  default     = 2
+}
+
+variable "agent_memory" {
+  description = "Memory for each agent node"
   type        = number
   default     = 4 * 1024
 }
