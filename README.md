@@ -2,7 +2,10 @@
 
 Current list of modules:
 - [k3s](modules/k3s/)
-  - [example deployment using this modules](examples/k3s-example-deployment/)
+  - [basic example deployment using this module](examples/k3s-basic-deployment/)
+  - [example deployment using this module with the haproxy-lb to configure a HA TCP loadbalancer for the kube api](examples/k3s-with-load-balancer-deployment/)
+- [haproxy-lb](modules/haproxy-lb/)
+  - [basic example deployment using this module](examples/haproxy-lb-basic-deployment/)
 
 Additional modules and examples will be added over time.
 
@@ -18,3 +21,6 @@ Additional modules and examples will be added over time.
 - Run `terraform/tofu destroy` to destroy the deployed infrastructure
 - Read the README and variables.tf for the module for configuration notes, limitations, known issues, and additional variables not set in the example deployment
 - Push your working deployment to your remote repo and consider setting up cicd to handle your infrastructure deployments for you. Be sure to not store anything sensitive in git. It is recommended to add state and auto.tfvars files to .gitignore so they aren't accidentally committed with sensitive values
+
+# Proxmox version 7 and older
+Users that still run Proxmox versions 7 and older [read about known issues and workarounds here related to the bpg provider depending on API updates made in Proxmox 8.x](./docs/proxmox_7_limitations.md).

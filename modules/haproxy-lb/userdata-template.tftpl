@@ -1,0 +1,101 @@
+#cloud-config
+prefer_fqdn_over_hostname: false
+users:
+  - name: ${user}
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    shell: /bin/bash
+    hashed_passwd: "${user_password}"
+    lock_passwd: false
+    chpasswd: { expire: False }
+    ssh_authorized_keys:
+      - ${ssh_key}
+    ssh_pwauth: True
+runcmd:
+  - apt update && apt upgrade -y
+  - apt install -y keepalived
+  - mkdir -p /mnt/haproxy
+  - |
+    tee /mnt/haproxy/haproxy.cfg <<EOF >/dev/null
+    global
+      # turn on stats unix socket
+      stats socket /var/lib/haproxy/stats
+    defaults
+      mode http
+      timeout client 10s
+      timeout connect 5s
+      timeout server 10s
+      timeout http-request 10s
+      log global
+    userlist haproxy-dataplaneapi
+      user admin insecure-password ${dataplane_password}
+    program api
+      command /usr/bin/dataplaneapi --host 0.0.0.0 --port 5555 --haproxy-bin /usr/sbin/haproxy --config-file /usr/local/etc/haproxy/haproxy.cfg --reload-cmd "kill -SIGUSR2 1" --restart-cmd "kill -SIGUSR2 1" --reload-delay 5 --userlist haproxy-dataplaneapi
+      no option start-on-reload
+    frontend stats
+      mode http
+      bind *:8404
+      stats enable
+      stats uri /stats
+      stats refresh 10s
+      stats admin if LOCALHOST
+      monitor-uri /healthz
+      option      dontlognull
+    frontend lb-frontend
+      bind *:${listener_port}
+      mode tcp
+      option tcplog
+      default_backend default-backend
+    backend default-backend
+      mode tcp
+      option tcp-check
+      balance roundrobin
+      default-server inter 10s downinter 5s
+      %{~ for index, ip in lb_target_ip_list ~}
+      server server-${index} ${ip}:${target_port} check
+      %{~ endfor ~}
+
+    EOF
+  - |
+    tee /etc/keepalived/check.sh <<-EOF >/dev/null
+    #!/bin/bash
+    # Check if haproxy monitor-uri is reporting that it is ready
+    /usr/bin/curl 0.0.0.0:8404/healthz | grep "Service ready" || exit 1
+    EOF
+  - chmod +x /etc/keepalived/check.sh
+  - |
+    tee /etc/keepalived/keepalived.conf <<-EOF >/dev/null
+    global_defs {
+      enable_script_security
+      script_user root
+    }
+
+    vrrp_script chk_haproxy {
+      script '/etc/keepalived/check.sh'
+      interval 3
+      rise 3
+      fall 3
+      timeout 2
+    }
+
+    vrrp_instance haproxy-vip {
+      debug 2
+      interface eth0
+      state ${keepalived_state}
+      priority ${keepalived_priority}
+
+      virtual_router_id ${virtual_router_id}
+
+      use_vmac
+      vmac_xmit_base
+
+      virtual_ipaddress {
+        ${lb_vip}
+      }
+
+      track_script {
+        chk_haproxy
+      }
+    }
+    EOF
+  - docker run -d --name haproxy --restart unless-stopped -v /mnt/haproxy/:/usr/local/etc/haproxy -p ${listener_port}:${listener_port} -p 8404:8404 -p 5555:5555 ${haproxy_image}
+  - systemctl restart keepalived

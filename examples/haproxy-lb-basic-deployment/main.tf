@@ -2,11 +2,11 @@ locals {
   vm_ssh_user = "example-vm-user"
   vm_ssh_key  = "ssh public key for vm access"
   # password `password` hashed with command `mkpasswd -m sha-512 -s`
-  vm_user_password = "$6$lYn1N2zlfWxOnRrC$bSBBiEFdphiF.uG7Md0NsYerF0zfqREKI/SJsxG.0LJIZRRVwwsf.NpG9lY8lm09r5yFbSDlFXpodXmVqWzxR0"
-  server_node_list        = ["pve0", "pve1", "pve2"]
-  agent_node_list        = ["pve0", "pve1", "pve2"]
-  # Proxmox VM template that exists on each proxmox node you want to deploy a k3s node onto. Should have qemu-guest-agent installed and configured to run
-  template_name = "ubuntu-server-2204-base-template.v2"
+  vm_user_password  = "$6$lYn1N2zlfWxOnRrC$bSBBiEFdphiF.uG7Md0NsYerF0zfqREKI/SJsxG.0LJIZRRVwwsf.NpG9lY8lm09r5yFbSDlFXpodXmVqWzxR0"
+  haproxy_node_list = ["pve0", "pve1"]
+  # Proxmox VM template that exists on each proxmox node you want to deploy a VM onto. Should have qemu-guest-agent installed and configured to run
+  lb_template_name = "ubuntu-docker-2204-template.v1" # ubuntu server with docker preinstalled
+  lb_vip           = "10.1.0.20/23"
 }
 
 terraform {
@@ -23,7 +23,7 @@ terraform {
   # Configure whatever backend you use, this example shows using backblaze b2
   backend "s3" {
     bucket    = "example-tf"
-    key       = "k3s-example-deployment/terraform.tfstate"
+    key       = "haproxy-lb-basic-deployment/terraform.tfstate"
     endpoints = { s3 = "https://s3.us-west-002.backblazeb2.com" }
     region    = "us-east-1"
 
@@ -79,44 +79,30 @@ provider "proxmox" {
   }
 }
 
-# Generate a random token to use for nodes joining cluster
-resource "random_password" "join_token" {
-  length  = 40
-  special = false
-}
-
-module "k3s-management" {
+# This example shows configuring HAProxy with 2 nodes each deployed to a different Proxmox node, and they are configured to load balance traffic between 4 target IPs
+# Note that the listener_port and target_port are independent and don't need to be the same value
+module "k3s_api_lb" {
   # source ref using a git tag on public github repository
-  # source = git::https://github.com/jbmay/proxmox-tf-modules.git//modules/k3s?ref=v0.1.1
+  # source = git::https://github.com/jbmay/proxmox-tf-modules.git//modules/haproxy-lb?ref=v0.2.0
   # example local ref to module in same repo for testing changes
-  source = "../../modules/k3s"
+  source = "../../modules/haproxy-lb"
 
-  template_name           = local.template_name
+  user                    = local.vm_ssh_user
+  user_password           = local.vm_user_password
+  dataplane_password      = "example-dataplane-password"
+  ssh_key                 = local.vm_ssh_key
+  listener_port           = 443                                              # port that haproxy nodes accept traffic on
+  target_port             = 8443                                             # port that target IPs accept traffic on
+  lb_target_ip_list       = ["10.1.1.1", "10.1.1.2", "10.1.1.3", "10.1.1.4"] # List of IP addresses running the service listening on the target_port to be load balanced
+  lb_vip                  = local.lb_vip
+  virtual_router_id       = 97 # This variable is optional unless another VRRP cluster is already using id 51 on your network. We are arbitrarily setting it to 97
+  template_name           = local.lb_template_name
   root_disk_datastore_id  = "local-zfs"
   cloud_init_datastore_id = "local-zfs"
-  cluster_name            = "k3s-example"
-  # List of static IPs for server nodes. If using this input var, it should have 1 IP per proxmox node added to local.server_node_list
-  server_ips     = ["10.1.0.10/23", "10.1.0.11/23", "10.1.0.12/23"]
-  server_gateway = "10.1.0.1"
-  # List of proxmox nodes to deploy a k3s server node onto. This variable is used to determine the number of server nodes and which hosts to create them on
-  proxmox_server_nodes = local.server_node_list
-  # List of proxmox nodes to deploy a k3s agent node to
-  proxmox_agent_nodes = local.agent_node_list
-  join_token           = random_password.join_token.result
-  # For this example the server hostname is set to first static IP passed in to the module which will be assigned to the bootstrap node.
-  # See k3s module README for notes on recommended method of configuring this
-  server_hostname = "10.1.0.10"
-  user            = local.vm_ssh_user
-  user_password   = local.vm_user_password
-  ssh_key         = local.vm_ssh_key
-  # Snippet datastore can be any datastore that exists on each proxmox node. This example lists an NFS share that exists on each node
-  snippet_datastore = "some-nfs-share"
-  cpu_type          = "host"
-  root_disk_size    = 25
+  name_prefix             = "k3s-mgmt"
+  haproxy_nodes           = local.haproxy_node_list
+  snippet_datastore       = "some-nfs-share"
+  cpu_type                = "host"
+  root_disk_size          = 10
 
-}
-
-# If DHCP is used instead of static IPs, this can retrieve the IP of the bootstrap node
-output "bootstrap_ipv4_address" {
-  value = module.k3s-management.bootstrap_ipv4_address
 }
