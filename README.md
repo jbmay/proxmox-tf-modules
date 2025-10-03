@@ -6,6 +6,7 @@ Current list of modules:
   - [example deployment using this module with the haproxy-lb to configure a HA TCP loadbalancer for the kube api](examples/k3s-with-load-balancer-deployment/)
 - [haproxy-lb](modules/haproxy-lb/)
   - [basic example deployment using this module](examples/haproxy-lb-basic-deployment/)
+- [generic-vm](modules/generic-vm/)
 
 Additional modules and examples will be added over time.
 
