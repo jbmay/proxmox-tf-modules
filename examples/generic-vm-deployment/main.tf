@@ -77,6 +77,8 @@ module "example_docker_vm" {
   source = "../../modules/generic-vm"
 
   template_name           = local.template_name
+  # Example tags that can be used to identify information in the proxmox UI such as terraform deployment name used to create the VM and the name of the proxmox template that was cloned to provision the VM
+  tags                    = ["deployment.generic-vm-deployment", "template.${local.template_name}", "terraform"]
   root_disk_datastore_id  = "local-zfs"
   cloud_init_datastore_id = "local-zfs"
   name_prefix             = "example-docker"
@@ -88,6 +90,26 @@ module "example_docker_vm" {
   snippet_datastore = "some-nfs-share"
   cpu_type          = "host"
   root_disk_size    = 10
+  # Optional array of N disks to attach to VM for separating important data from root disk. See variables.tf for full list of fields.
+  data_disks = [
+    {
+      datastore_id = "local-zfs"
+      interface = "scsi1"
+      size = "20"
+      # Optional custom mount_location. Otherwise, disk will be mounted at /mnt/data${index in data_disks list}
+      mount_location = "/mnt/docker-data"
+    },
+    {
+      datastore_id = "local-zfs"
+      interface = "scsi2"
+      size = "5"
+    },
+    {
+      datastore_id = "local-zfs"
+      interface = "scsi3"
+      size = "10"
+    }
+  ]
 
 }
 
