@@ -155,6 +155,12 @@ variable "network_device_bridge" {
   default     = "vmbr1"
 }
 
+variable "vlan_id" {
+  description = "VLAN ID to set on network device if needed."
+  type        = string
+  default     = null
+}
+
 variable "network_device_firewall" {
   description = "Should firewall rules be used?"
   type        = bool

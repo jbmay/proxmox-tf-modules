@@ -107,6 +107,7 @@ resource "proxmox_virtual_environment_vm" "haproxy_nodes" {
     bridge   = var.network_device_bridge
     firewall = var.network_device_firewall
     mtu      = var.network_device_mtu
+    vlan_id  = var.network_device_vlan_id
   }
 
   vga {

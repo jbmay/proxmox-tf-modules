@@ -203,6 +203,7 @@ resource "proxmox_virtual_environment_vm" "generic_vm" {
     bridge   = var.network_device_bridge
     firewall = var.network_device_firewall
     mtu      = var.network_device_mtu
+    vlan_id  = var.vlan_id
   }
 
   vga {

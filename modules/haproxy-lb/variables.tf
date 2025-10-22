@@ -162,6 +162,12 @@ variable "haproxy_memory" {
   default     = 2 * 1024
 }
 
+variable "network_device_vlan_id" {
+  description = "VLAN ID to assign to network device"
+  type        = string
+  default     = null
+}
+
 variable "network_device_bridge" {
   description = "Which network bridge to use for the VM network interface. Defaults to vmbr1 since I use vmbr0 for management devices and vmbr1 for my default VM subnet"
   type        = string

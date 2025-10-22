@@ -212,6 +212,7 @@ resource "proxmox_virtual_environment_vm" "k3s_bootstrap_node" {
     bridge   = var.network_device_bridge
     firewall = var.network_device_firewall
     mtu      = var.network_device_mtu
+    vlan_id  = var.network_device_vlan_id
   }
 
   vga {
@@ -273,6 +274,7 @@ resource "proxmox_virtual_environment_vm" "k3s_server_nodes" {
     bridge   = var.network_device_bridge
     firewall = var.network_device_firewall
     mtu      = var.network_device_mtu
+    vlan_id  = var.network_device_vlan_id
   }
 
   vga {
@@ -333,6 +335,7 @@ resource "proxmox_virtual_environment_vm" "k3s_agent_nodes" {
     bridge   = var.network_device_bridge
     firewall = var.network_device_firewall
     mtu      = var.network_device_mtu
+    vlan_id  = var.network_device_vlan_id
   }
 
   vga {
