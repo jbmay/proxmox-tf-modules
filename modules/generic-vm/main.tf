@@ -95,7 +95,13 @@ resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
           systemctl daemon-reload || true
           mount -a
     runcmd:
-        - apt update && apt upgrade -y
+        - |
+          DISTRO=$( cat /etc/os-release | tr [:upper:] [:lower:] | grep -Poi '(ubuntu|rhel)' | uniq )
+          if [ $DISTRO == ubuntu]; then
+            apt update && apt upgrade -y
+          else
+            dnf update -y
+          fi
         - [bash, /usr/local/bin/provision-data-disks.sh]
 
     EOF
