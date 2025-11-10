@@ -16,8 +16,14 @@ variable "server_hostname" {
   type        = string
 }
 
-variable "k3s_options" {
-  description = "Additional cli options to set when starting k3s. Appended to the end of the k3s install command. example disabling some of the packaged components: '--disable=traefik --disable=servicelb'"
+variable "k3s_server_options" {
+  description = "Additional cli options to set when starting k3s servers. Appended to the end of the k3s install command. example disabling some of the packaged components: '--disable=traefik --disable=servicelb'"
+  type        = string
+  default     = ""
+}
+
+variable "k3s_agent_options" {
+  description = "Additional cli options to set when starting k3s agents. Appended to the end of the k3s install command."
   type        = string
   default     = ""
 }
