@@ -3,7 +3,23 @@
 variable "k3s_version" {
   description = "What version of k3s to install?"
   type        = string
-  default     = "v1.31.5+k3s1"
+  default     = "v1.34.1+k3s1"
+}
+
+variable "join_token" {
+  description = "Secret token for nodes to use to join the cluster"
+  type        = string
+}
+
+variable "server_hostname" {
+  description = "Fixed IP or hostname to add to cert SANs for kube API. Also used as the join hostname for cluster nodes"
+  type        = string
+}
+
+variable "k3s_options" {
+  description = "Additional cli options to set when starting k3s. Appended to the end of the k3s install command. example disabling some of the packaged components: '--disable=traefik --disable=servicelb'"
+  type        = string
+  default     = ""
 }
 
 ## VM Settings
@@ -97,16 +113,6 @@ variable "bootstrap_cluster" {
   description = "Should cluster be bootstrapped? Set to true if creating a new cluster, set to false if joining nodes to existing cluster."
   type        = bool
   default     = true
-}
-
-variable "join_token" {
-  description = "Secret token for nodes to use to join the cluster"
-  type        = string
-}
-
-variable "server_hostname" {
-  description = "Fixed IP or hostname to add to cert SANs for kube API. Also used as the join hostname for cluster nodes"
-  type        = string
 }
 
 variable "user" {

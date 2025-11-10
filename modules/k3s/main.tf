@@ -63,7 +63,7 @@ resource "proxmox_virtual_environment_file" "server_user_data_cloud_config" {
         ssh_pwauth: True
     runcmd:
         - apt update && apt upgrade -y
-        - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${var.k3s_version} K3S_TOKEN=${var.join_token} sh -s - server --server https://${var.server_hostname}:6443 --tls-san=${var.server_hostname}
+        - curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=${var.k3s_version} K3S_TOKEN=${var.join_token} sh -s - server --server https://${var.server_hostname}:6443 --tls-san=${var.server_hostname} ${var.k3s_options}
     EOF
 
     file_name = "${local.uname}-server-${var.bootstrap_cluster ? count.index + 1 : count.index}-user-data-cloud-config.yaml"
